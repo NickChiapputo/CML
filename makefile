@@ -8,7 +8,7 @@ CFLAGS = -Wall
 LIBS = -lm
 
 # Define the C source files
-SRCS = ml.c mnist.c loss.c activation.c
+SRCS = ml.c mnist.c loss.c activation.c layers.c
 
 # Define the C object files
 OBJS = $(SRCS:.c=.o)
