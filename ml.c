@@ -8,6 +8,7 @@
 #include "colors.h"
 #include "mnist.h"
 #include "loss.h"
+#include "layers.h"
 
 
 #define TRAIN_DATA_PATH     "./data/mnist/t10k-images.idx3-ubyte"
@@ -22,10 +23,53 @@
 
 
 // Global function definitions.
+int testDataParsing();
+int testCrossEntropyLoss();
+int testSoftmaxActivation();
 
+
+// Global variable definitions.
+layer FC_SOFTMAX_LAYER;
 
 
 int main( int argc, char ** argv )
+{   
+    /**** Test MNIST Data Parsing ****/ 
+
+    if( testDataParsing() ) 
+        return 1;
+
+    /*********************************/
+
+ 
+    /**** Test Cross Entropy Loss ****/
+
+    int numClasses = 5, numPredictions = 1;
+    if( testCrossEntropyLoss( numClasses, numPredictions ) ) return 1;
+
+    /*********************************/
+
+
+    /**** Test Softmax Activation Function ****/
+
+    numClasses = 4;
+    double * input = (double*) malloc( numClasses * sizeof( double ) );
+    double * output = (double*) malloc( numClasses * sizeof( double ) );
+    input[ 0 ] = -1; input[ 1 ] = 0; input[ 2 ] = 3; input[ 3 ] = 5;
+    FC_SOFTMAX_LAYER.activation = ACTIVATION_softmax;
+
+    if( testSoftmaxActivation( input, numClasses, output ) ) return 1;
+
+    free( input );
+    free( output );
+
+    /******************************************/
+
+    return 0;
+}
+
+
+int testDataParsing()
 {
     uint32_t magicNumber = 0, numImages = 0, rows = 0, cols = 0;
 
@@ -105,10 +149,12 @@ int main( int argc, char ** argv )
     free( data );
     free( labels );
 
+    return 0;
+}
 
-    // Test CELoss.
-    int numClasses = 5, numPredictions = 1;
 
+int testCrossEntropyLoss( int numClasses, int numPredictions )
+{
     double ** predictions = (double**) malloc( numPredictions * sizeof( double* ) );
     uint8_t ** target = (uint8_t**) malloc( numPredictions * sizeof( uint8_t* ) );
     for( int i = 0; i < numPredictions; i++ )
@@ -140,21 +186,17 @@ int main( int argc, char ** argv )
     free( predictions );
     free( target );
 
+    return 0;
+}
 
-    // Test Softmax implementation.
-    numClasses = 4;
-    double * input = (double*) malloc( numClasses * sizeof( double ) );
-    double * output = (double*) malloc( numClasses * sizeof( double ) );
-    input[ 0 ] = -1;
-    input[ 1 ] = 0;
-    input[ 2 ] = 3;
-    input[ 3 ] = 5;
-    ACTIVATION_softmax( input, numClasses, output );
+
+int testSoftmaxActivation( double * input, int numClasses, double * output )
+{
+    FC_SOFTMAX_LAYER.activation( input, numClasses, output );
+    // ACTIVATION_softmax( input, numClasses, output );
     printf( "Softmax Activation:\n" );
     for( int i = 0; i < numClasses; i++ )
         printf( "    %lf\n", output[ i ] );
-    free( input );
-    free( output );
 
     return 0;
 }
