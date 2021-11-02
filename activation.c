@@ -31,3 +31,12 @@ int ACTIVATION_softmax( double * input, int inputLength, double * output )
 	return 0;
 }
 
+
+int ACTIVATION_relu( double * input, int inputLength, double * output )
+{
+	for( int i = 0; i < inputLength; i++ )
+		output[ i ] = input[ i ] > 0 ? input[ i ] : 0.0;
+
+	return 0;
+}
+
