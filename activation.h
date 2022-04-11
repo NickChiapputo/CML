@@ -35,4 +35,22 @@ int ACTIVATION_softmax( double * input, int inputLength, double * output );
 ****/
 int ACTIVATION_relu( double * input, int inputLength, double * output );
 
+
+/****
+	*	@description		Rectified Linear Unit (ReLU) activation function takes
+	* 						an array of inputs and sets the output as the input value if 
+	* 						above zero. Otherwise, the output value is multiplied
+	* 						by a value alpha. It is expected that the output and
+	* 						input arrays are pre-allocated.
+	* 
+	* 	@param input 		Set of real value input values.
+	* 	@param inputLength	Number of input and output values.
+	* 	@param alpha		
+	* 	@param output 		Set of real value output values.
+	* 
+	* 	@return 			0 for success, 1 for error.
+****/
+int ACTIVATION_leaky_relu( double * input, int inputLength, 
+						   double alpha, double * output );
+
 #endif

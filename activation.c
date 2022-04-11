@@ -40,3 +40,13 @@ int ACTIVATION_relu( double * input, int inputLength, double * output )
 	return 0;
 }
 
+
+int ACTIVATION_leaky_relu( double * input, int inputLength, 
+						   double alpha, double * output )
+{
+	for( int i = 0; i < inputLength; i++ )
+		output[ i ] = input[ i ] > 0 ? input[ i ] : alpha * input[ i ];
+
+	return 0;
+}
+
