@@ -50,3 +50,29 @@ int ACTIVATION_leaky_relu( double * input, int inputLength,
 	return 0;
 }
 
+
+int ACTIVATION_relu_2d( double *** input, int inX, int inY, int inC,
+						double **** output )
+{
+	for( int i = 0; i < inY; i++ )
+		for( int j = 0; j < inX; j++ )
+			for( int k = 0; k < inC; k++ )
+				(*output)[ i ][ j ][ k ] = input[ i ][ j ][ k ] > 0 ? 
+					input[ i ][ j ][ k ] : 0.0;
+
+	return 0;
+}
+
+
+int ACTIVATION_leaky_relu_2d( double *** input, int inX, int inY, int inC,
+						   double alpha, double **** output )
+{
+	for( int i = 0; i < inY; i++ )
+		for( int j = 0; j < inX; j++ )
+			for( int k = 0; k < inC; k++ )
+				(*output)[ i ][ j ][ k ] = input[ i ][ j ][ k ] > 0 ? 
+					input[ i ][ j ][ k ] : alpha * input[ i ][ j ][ k ];
+
+	return 0;
+}
+

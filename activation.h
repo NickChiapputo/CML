@@ -53,4 +53,42 @@ int ACTIVATION_relu( double * input, int inputLength, double * output );
 int ACTIVATION_leaky_relu( double * input, int inputLength, 
 						   double alpha, double * output );
 
+
+/****
+	*	@description		Rectified Linear Unit (ReLU) activation function takes
+	* 						an array of inputs and sets the output as the input value if 
+	* 						above zero. Otherwise, the output value is rectified to zero.
+	* 						It is expected that the output and input arrays are pre-allocated.
+	* 
+	* 	@param input 		Input values with shape HxWxC.
+	* 	@param inX			Number of columns in input.
+	* 	@param inY			Number of rows in input.
+	* 	@param inC			Number of channels in input.
+	* 	@param output 		Pointer to output matrix with shape HxWxC.
+	* 
+	* 	@return 			0 for success, 1 for error.
+****/
+int ACTIVATION_relu_2d( double *** input, int inX, int inY, int inC, 
+						double **** output );
+
+
+/****
+	*	@description		Rectified Linear Unit (ReLU) activation function takes
+	* 						an array of inputs and sets the output as the input value if 
+	* 						above zero. Otherwise, the output value is multiplied
+	* 						by a value alpha. It is expected that the output and
+	* 						input arrays are pre-allocated.
+	* 
+	* 	@param input 		Input values with shape HxWxC.
+	* 	@param inX			Number of columns in input.
+	* 	@param inY			Number of rows in input.
+	* 	@param inC			Number of channels in input.
+	* 	@param alpha		Coefficient for rectifying negative values.
+	* 	@param output 		Pointer to output matrix with shape HxWxC.
+	* 
+	* 	@return 			0 for success, 1 for error.
+****/
+int ACTIVATION_leaky_relu_2d( double *** input, int inX, int inY, int inC, 
+						   	  double alpha, double **** output );
+
 #endif
