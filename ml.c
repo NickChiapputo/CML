@@ -31,6 +31,7 @@ int testDataParsing();
 int testCrossEntropyLoss();
 int testSoftmaxActivation();
 int test2DConvolution();
+int testLoadWeights();
 
 
 // Global variable definitions.
@@ -79,6 +80,15 @@ int main( int argc, char ** argv )
     /**** Test 2D Convolutional Layer ****/
     printf( "[" B_GREEN "Test 2D Convolution" RESET "]\n" );
     if( test2DConvolution() ) return 1;
+
+    printf( LINE_SEPARATOR );
+    /******************************************/
+
+
+    /****  ****/
+    printf( "[" B_GREEN "Test Weights Loading from File" RESET "]\n" );
+
+    if( testLoadWeights() ) return 1;
 
     printf( LINE_SEPARATOR );
     /******************************************/
@@ -404,3 +414,47 @@ int test2DConvolution()
     return 0;
 }
 
+
+int testLoadWeights()
+{
+    char * filename = "test_weights.txt";
+
+    // Open weights file.
+    FILE * weightsfp = fopen( filename, "r" );
+    if( weightsfp == NULL )
+    {
+        printf( ERROR "Can't open file." );
+        return 1;
+    }
+
+    // Parse weights file.
+    uint16_t x = 3, y = 3, c = 2;
+    double *** weights; // Hold kernel weights.
+    double * bias;      // Hold filter biases.
+    double val;         // Intermediate read value.
+
+
+    weights = (double***) malloc( c * sizeof( double** ) );
+    bias = (double*) malloc( c * sizeof( double ) );
+    for( uint16_t k = 0; k < c; k++ )
+    {
+        weights[ k ] = (double**) malloc( y * sizeof( double* ) );
+        printf( "Filter %d:\n", k+1 );
+        for( uint16_t i = 0; i < y; i++ )
+        {
+            weights[ k ][ i ] = (double*) malloc( x * sizeof( double ) );
+            for( uint16_t j = 0; j < x; j++ )
+            {
+                fscanf( weightsfp, "%lf", &weights[ k ][ i ][ j ] );
+                printf( "  % 5.2f", weights[ k ][ i ][ j ] );
+            }
+            printf( "\n" );
+        }
+        fscanf( weightsfp, "%lf", &bias[ k ] );
+        printf( "  Bias: % 5.2f\n\n", bias[ k ] );
+    }
+
+    fclose( weightsfp );
+
+    return 0;
+}
