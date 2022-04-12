@@ -22,7 +22,8 @@
 
 // Output formatting.
 #define ERROR   B_RED "ERROR: " RESET     // Error message color.
-#define LINE_SEPARATOR B_BLUE "============================================================\n" RESET
+// #define LINE_SEPARATOR B_BLUE "============================================================\n" RESET
+#define LINE_SEPARATOR "\n"
 
 
 // Global function definitions.
@@ -282,12 +283,12 @@ int test2DConvolution()
                 }
                 printf( "\n" DEBUG_PRESTRING );
             }
-            printf( "  Bias: % 5.2f\n\n", layer.bias[ i ] );
+            printf( "  Bias: % 5.2f\n" DEBUG_PRESTRING "\n", layer.bias[ i ] );
         }
     #endif
 
 
-    /**** Define the test input.
+    /**** Define and allocate the test input.
         *   0, 0, 0, 1, 1, 0, 0, 0
         *   0, 0, 0, 1, 1, 0, 0, 0
         *   0, 0, 0, 1, 1, 0, 0, 0
@@ -297,16 +298,16 @@ int test2DConvolution()
         *   0, 0, 0, 1, 1, 0, 0, 0
         *   0, 0, 0, 1, 1, 0, 0, 0
     ****/
-    uint16_t inY = 8, inX = 8, inC = 1;
-    uint16_t outY = 8, outX = 8, outC = 1;
+    uint16_t inY = 8, inX = 8;
+    uint16_t outY = 8, outX = 8;
     double *** input = (double***) malloc( inY * sizeof( double** ) );
     for( i = 0; i < inY; i++ )
     {
         input[ i ] = (double**) malloc( inX * sizeof( double* ) );
         for( j = 0; j < inX; j++ )
         {
-            input[ i ][ j ] = (double*) malloc( inC * sizeof( double ) );
-            for( k = 0; k < inC; k++ )
+            input[ i ][ j ] = (double*) malloc( layer.inFilters * sizeof( double ) );
+            for( k = 0; k < layer.inFilters; k++ )
             {
                 if( j == 3 || j == 4 )
                     input[ i ][ j ][ k ] = 1;
@@ -318,7 +319,7 @@ int test2DConvolution()
 
 
     #if DEBUG
-        for( k = 0; k < inC; k++ )
+        for( k = 0; k < layer.inFilters; k++ )
         {
             printf( DEBUG_PRESTRING "Input Channel %d:\n" DEBUG_PRESTRING, k+1 );
             for( i = 0; i < inY; i++ )
@@ -340,8 +341,8 @@ int test2DConvolution()
         output[ i ] = (double**) malloc( outX * sizeof( double* ) );
         for( j = 0; j < outX; j++ )
         {
-            output[ i ][ j ] = (double*) malloc( outC * sizeof( double ) );
-            for( k = 0; k < outC; k++ )
+            output[ i ][ j ] = (double*) malloc( layer.outFilters * sizeof( double ) );
+            for( k = 0; k < layer.outFilters; k++ )
             {
                 output[ i ][ j ][ k ] = 0;
             }
@@ -366,6 +367,39 @@ int test2DConvolution()
             printf( "\n" );
         }
     #endif
+
+    // Free output, input, weights, and biases.
+    for( i = 0; i < outY; i++ )
+    {
+        for( j = 0; j < outX; j++ )
+        {
+            free( output[ i ][ j ] );
+        }
+        free( output[ i ] );
+    }
+
+    for( i = 0; i < inY; i++ )
+    {
+        for( j = 0; j < inX; j++ )
+        {
+            free( input[ i ][ j ] );
+        }
+        free( input[ i ] );
+    }
+
+    for( i = 0; i < layer.outFilters; i++ )
+    {
+        for( j = 0; j < layer.kernelHeight; j++ )
+        {
+            free( layer.weights[ i ][ j ] );
+        }
+        free( layer.weights[ i ] );
+    }
+
+    free( input );
+    free( output );
+    free( layer.weights );
+    free( layer.bias );
 
     return 0;
 }
