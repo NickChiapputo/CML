@@ -27,8 +27,8 @@ typedef struct LAYERS_Conv2D
 
 	uint8_t padded;
 
-	double *** weights;
-	double *   bias;
+	double *** weights;	// Shape = (inFilters * outFilters)x(kernelHeight)x(kernelWidth)
+	double *   bias;	// Shape = (inFiltesr * outFilters)x1
 
 	int (*forward)(double****, double***, uint16_t, uint16_t, 
 				   uint16_t, struct LAYERS_Conv2D);
