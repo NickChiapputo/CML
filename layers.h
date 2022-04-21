@@ -27,14 +27,22 @@ typedef struct LAYERS_Conv2D
 
 	uint8_t padded;
 
-	double *** weights;	// Shape = (inFilters * outFilters)x(kernelHeight)x(kernelWidth)
-	double *   bias;	// Shape = (inFiltesr * outFilters)x1
+	double **** weights;	// Shape = (outFilters)x(inFilters)x(kernelHeight)x(kernelWidth)
+	double *   bias;		// Shape = (inFiltesr * outFilters)x1
 
 	int (*forward)(double****, double***, uint16_t, uint16_t, 
 				   uint16_t, struct LAYERS_Conv2D);
 
 	int (*activation)(double*, int, double*);
 } LAYERS_Conv2D;
+
+
+/**** Helper Functions ****/
+int LAYERS_load_weights( double ***** weights, double ** bias, 
+    uint16_t inC, uint16_t outC, 
+    uint16_t filterHeight, uint16_t filterWidth,
+    char * filename );
+
 
 /**** Forward Pass Functions ****/
 /****

@@ -41,27 +41,27 @@ LAYERS_activation FC_SOFTMAX_LAYER;
 int main( int argc, char ** argv )
 {
     /**** Test MNIST Data Parsing ****/ 
-    printf( "[" B_GREEN "MNIST Data Parsing" RESET "]\n" );
+    /*printf( "[" B_GREEN "MNIST Data Parsing" RESET "]\n" );
     
     if( testDataParsing() )
         return 1;
 
-    printf( LINE_SEPARATOR );
+    printf( LINE_SEPARATOR );*/
     /*********************************/
 
  
     /**** Test Cross Entropy Loss ****/
-    printf( "[" B_GREEN "Test Cross Entropy Loss" RESET "]\n" );
+    /*printf( "[" B_GREEN "Test Cross Entropy Loss" RESET "]\n" );
     
     int numClasses = 5, numPredictions = 1;
     if( testCrossEntropyLoss( numClasses, numPredictions ) ) return 1;
 
-    printf( LINE_SEPARATOR );
+    printf( LINE_SEPARATOR );*/
     /*********************************/
 
 
     /**** Test Softmax Activation Function ****/
-    printf( "[" B_GREEN "Test Softmax Activation" RESET "]\n" );
+    /*printf( "[" B_GREEN "Test Softmax Activation" RESET "]\n" );
     numClasses = 4;
     double * input = (double*) malloc( numClasses * sizeof( double ) );
     double * output = (double*) malloc( numClasses * sizeof( double ) );
@@ -73,7 +73,7 @@ int main( int argc, char ** argv )
     free( input );
     free( output );
 
-    printf( LINE_SEPARATOR );
+    printf( LINE_SEPARATOR );*/
     /******************************************/
 
 
@@ -85,12 +85,12 @@ int main( int argc, char ** argv )
     /******************************************/
 
 
-    /****  ****/
-    printf( "[" B_GREEN "Test Weights Loading from File" RESET "]\n" );
+    /**** Test Loading Convolutional Weights and Biases from File ****/
+    /*printf( "[" B_GREEN "Test Weights Loading from File" RESET "]\n" );
 
     if( testLoadWeights() ) return 1;
 
-    printf( LINE_SEPARATOR );
+    printf( LINE_SEPARATOR );*/
     /******************************************/
 
     return 0;
@@ -236,8 +236,8 @@ int test2DConvolution()
     LAYERS_Conv2D layer;
 
     // Set the input and output filter numbers.
-    layer.inFilters = 1;
-    layer.outFilters = 1;
+    layer.inFilters = 2;
+    layer.outFilters = 2;
 
     // Set the kernel stride.
     layer.strideX = 1;
@@ -253,7 +253,13 @@ int test2DConvolution()
     layer.padded = 1;
 
     // Intialize the kernel weights and biases.
-    uint16_t i, j, k;
+    uint16_t i, j, k, 
+             x, y, z;
+    LAYERS_load_weights( &layer.weights, &layer.bias, 
+        layer.inFilters, layer.outFilters, 
+        layer.kernelHeight, layer.kernelWidth,
+        "test_conv_weights.txt" );
+    /*
     layer.weights = (double***) malloc( layer.outFilters * sizeof( double** ) );
     for( i = 0; i < layer.outFilters; i++ )
     {
@@ -274,69 +280,98 @@ int test2DConvolution()
     {
         layer.bias[ i ] = 0.0;
     }
+    */
 
     // Define the forward function.
     layer.forward = (*LAYERS_convolution_2d);
 
     // Print out the weights and biases.
     #if DEBUG
-        for( i = 0; i < layer.outFilters; i++ )
+        for( k = 0; k < layer.outFilters; k++ )
         {
-            printf( DEBUG_PRESTRING "Filter %i:\n" DEBUG_PRESTRING, i+1 );
-
-            for( j = 0; j < layer.kernelHeight; j++ )
+            printf( "Output %i Filters:\n", k+1 );
+            for( z = 0; z < layer.inFilters; z++ )
             {
-                printf( "  " );
-                for( k = 0; k < layer.kernelWidth; k++ )
+                printf( "  Input %i Filters:\n", z+1 );
+
+                for( i = 0; i < layer.kernelHeight; i++ )
                 {
-                    printf( "% 5.2f ", layer.weights[ i ][ j ][ k ] );
+                    printf( "    " );
+                    for( j = 0; j < layer.kernelWidth; j++ )
+                    {
+                        printf( "% 5.2f ", layer.weights[ k ][ z ][ i ][ j ] );
+                    }
+                    printf( "\n" DEBUG_PRESTRING );
                 }
-                printf( "\n" DEBUG_PRESTRING );
+                printf( "\n" );
             }
-            printf( "  Bias: % 5.2f\n" DEBUG_PRESTRING "\n", layer.bias[ i ] );
+
+            printf( "  Bias: % 5.2f\n" DEBUG_PRESTRING "\n", layer.bias[ k ] );
         }
     #endif
 
 
     /**** Define and allocate the test input.
-        *   0, 0, 0, 1, 1, 0, 0, 0
-        *   0, 0, 0, 1, 1, 0, 0, 0
-        *   0, 0, 0, 1, 1, 0, 0, 0
-        *   0, 0, 0, 1, 1, 0, 0, 0
-        *   0, 0, 0, 1, 1, 0, 0, 0
-        *   0, 0, 0, 1, 1, 0, 0, 0
-        *   0, 0, 0, 1, 1, 0, 0, 0
-        *   0, 0, 0, 1, 1, 0, 0, 0
+        *   Input 1:
+        *     0, 0, 0, 1, 1, 0, 0, 0
+        *     0, 0, 0, 1, 1, 0, 0, 0
+        *     0, 0, 0, 1, 1, 0, 0, 0
+        *     0, 0, 0, 1, 1, 0, 0, 0
+        *     0, 0, 0, 1, 1, 0, 0, 0
+        *     0, 0, 0, 1, 1, 0, 0, 0
+        *     0, 0, 0, 1, 1, 0, 0, 0
+        *     0, 0, 0, 1, 1, 0, 0, 0
+        *   Input 2:
+        *     0, 0, 0, 0, 0, 0, 0, 0
+        *     0, 0, 0, 0, 0, 0, 0, 0
+        *     0, 0, 0, 0, 0, 0, 0, 0
+        *     1, 1, 1, 1, 1, 1, 1, 1
+        *     1, 1, 1, 1, 1, 1, 1, 1
+        *     0, 0, 0, 0, 0, 0, 0, 0
+        *     0, 0, 0, 0, 0, 0, 0, 0
+        *     0, 0, 0, 0, 0, 0, 0, 0
     ****/
     uint16_t inY = 8, inX = 8;
     uint16_t outY = 8, outX = 8;
-    double *** input = (double***) malloc( inY * sizeof( double** ) );
-    for( i = 0; i < inY; i++ )
+    double *** input = (double***) malloc( layer.inFilters * sizeof( double** ) );
+    for( k = 0; k < layer.inFilters; k++ )
     {
-        input[ i ] = (double**) malloc( inX * sizeof( double* ) );
-        for( j = 0; j < inX; j++ )
+        input[ k ] = (double**) malloc( inY * sizeof( double* ) );
+        for( i = 0; i < inY; i++ )
         {
-            input[ i ][ j ] = (double*) malloc( layer.inFilters * sizeof( double ) );
-            for( k = 0; k < layer.inFilters; k++ )
+            input[ k ][ i ] = (double*) malloc( inX * sizeof( double ) );
+            for( j = 0; j < inX; j++ )
             {
-                if( j == 3 || j == 4 )
-                    input[ i ][ j ][ k ] = 1;
+                if( k == 0 )
+                {
+                    // Input 1
+                    if( j == 3 || j == 4 )
+                        input[ k ][ i ][ j ] = 1;   // Middle columns.
+                    else
+                        input[ k ][ i ][ j ] = 0;
+                }
                 else
-                    input[ i ][ j ][ k ] = 0;
+                {
+                    // Input 2
+                    if( i == 3 || i == 4 )
+                        input[ k ][ i ][ j ] = 1;   // Middle rows.
+                    else
+                        input[ k ][ i ][ j ] = 0;
+                }
             }
         }
     }
 
 
     #if DEBUG
-        for( k = 0; k < layer.inFilters; k++ )
+        for( z = 0; z < layer.inFilters; z++ )
         {
-            printf( DEBUG_PRESTRING "Input Channel %d:\n" DEBUG_PRESTRING, k+1 );
-            for( i = 0; i < inY; i++ )
+            printf( DEBUG_PRESTRING "Input Channel %d:\n" DEBUG_PRESTRING, z+1 );
+            for( y = 0; y < inY; y++ )
             {
-                for( j = 0; j < inX; j++ )
+                for( x = 0; x < inX; x++ )
                 {
-                    printf( "  % 5.2f ", input[ i ][ j ][ k ] );
+                    printf( "  % 5.2f ", input[ z ][ y ][ x ] );
                 }
                 printf( "\n" DEBUG_PRESTRING );
             }
@@ -345,16 +380,16 @@ int test2DConvolution()
     #endif
 
     // Allocate output.
-    double *** output = (double***) malloc( outY * sizeof( double** ) );
-    for( i = 0; i < outY; i++ )
+    double *** output = (double***) malloc( layer.outFilters * sizeof( double** ) );
+    for( k = 0; k < layer.outFilters; k++ )
     {
-        output[ i ] = (double**) malloc( outX * sizeof( double* ) );
-        for( j = 0; j < outX; j++ )
+        output[ k ] = (double**) malloc( outY * sizeof( double* ) );
+        for( i = 0; i < outY; i++ )
         {
-            output[ i ][ j ] = (double*) malloc( layer.outFilters * sizeof( double ) );
-            for( k = 0; k < layer.outFilters; k++ )
+            output[ k ][ i ] = (double*) malloc( outX * sizeof( double ) );
+            for( j = 0; j < outX; j++ )
             {
-                output[ i ][ j ][ k ] = 0;
+                output[ k ][ i ][ j ] = 0;
             }
         }
     }
@@ -363,14 +398,14 @@ int test2DConvolution()
     layer.forward( &output, input, inY, inX, layer.inFilters, layer );
 
     #if DEBUG
-        for( k = 0; k < layer.outFilters; k++ )
+        for( z = 0; z < layer.outFilters; z++ )
         {
-            printf( DEBUG_PRESTRING "Output Channel: %d\n" DEBUG_PRESTRING, k+1 );
-            for( i = 0; i < outY; i++ )
+            printf( DEBUG_PRESTRING "Output Channel: %d\n" DEBUG_PRESTRING, z+1 );
+            for( y = 0; y < outY; y++ )
             {
-                for( j = 0; j < outX; j++ )
+                for( x = 0; x < outX; x++ )
                 {
-                    printf( "  % 5.2f", output[ i ][ j ][ k ] );
+                    printf( "  % 5.2f", output[ z ][ y ][ x ] );
                 }
                 printf( "\n" DEBUG_PRESTRING );
             }
@@ -379,31 +414,35 @@ int test2DConvolution()
     #endif
 
     // Free output, input, weights, and biases.
-    for( i = 0; i < outY; i++ )
+    for( z = 0; z < layer.outFilters; z++ )
     {
-        for( j = 0; j < outX; j++ )
+        for( y = 0; y < outY; y++ )
         {
-            free( output[ i ][ j ] );
+            free( output[ z ][ y ] );
         }
-        free( output[ i ] );
+        free( output[ z ] );
     }
 
-    for( i = 0; i < inY; i++ )
+    for( k = 0; k < layer.inFilters; k++ )
     {
-        for( j = 0; j < inX; j++ )
+        for( i = 0; i < inY; i++ )
         {
-            free( input[ i ][ j ] );
+            free( input[ k ][ i ] );
         }
-        free( input[ i ] );
+        free( input[ k ] );
     }
 
-    for( i = 0; i < layer.outFilters; i++ )
+    for( z = 0; z < layer.outFilters; z++ )
     {
-        for( j = 0; j < layer.kernelHeight; j++ )
+        for( k = 0; k < layer.inFilters; k++ )
         {
-            free( layer.weights[ i ][ j ] );
+            for( i = 0; i < layer.kernelHeight; i++ )
+            {
+                free( layer.weights[ z ][ k ][ i ] );
+            }
+            free( layer.weights[ z ][ k ] );
         }
-        free( layer.weights[ i ] );
+        free( layer.weights[ z ] );
     }
 
     free( input );
@@ -431,7 +470,6 @@ int testLoadWeights()
     uint16_t x = 3, y = 3, c = 2;
     double *** weights; // Hold kernel weights.
     double * bias;      // Hold filter biases.
-    double val;         // Intermediate read value.
 
 
     weights = (double***) malloc( c * sizeof( double** ) );
