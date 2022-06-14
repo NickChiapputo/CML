@@ -2,7 +2,7 @@
 CC = gcc
 
 # Define any compile-time flags
-CFLAGS = -Wall
+CFLAGS = -Wall -Ofast
 
 # Define any libraries to link to the executable
 LIBS = -lm
