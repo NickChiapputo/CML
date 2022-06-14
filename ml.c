@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <time.h>
 
 #include "debug.h"
 
@@ -32,6 +33,7 @@ int testCrossEntropyLoss();
 int testSoftmaxActivation();
 int test2DConvolution();
 int testLoadWeights();
+int testTinyPSSR();
 
 
 // Global variable definitions.
@@ -49,7 +51,7 @@ int main( int argc, char ** argv )
     printf( LINE_SEPARATOR );*/
     /*********************************/
 
- 
+
     /**** Test Cross Entropy Loss ****/
     /*printf( "[" B_GREEN "Test Cross Entropy Loss" RESET "]\n" );
     
@@ -63,8 +65,8 @@ int main( int argc, char ** argv )
     /**** Test Softmax Activation Function ****/
     /*printf( "[" B_GREEN "Test Softmax Activation" RESET "]\n" );
     numClasses = 4;
-    double * input = (double*) malloc( numClasses * sizeof( double ) );
-    double * output = (double*) malloc( numClasses * sizeof( double ) );
+    DATATYPE * input = (DATATYPE*) malloc( numClasses * sizeof( DATATYPE ) );
+    DATATYPE * output = (DATATYPE*) malloc( numClasses * sizeof( DATATYPE ) );
     input[ 0 ] = -1; input[ 1 ] = 0; input[ 2 ] = 3; input[ 3 ] = 5;
     FC_SOFTMAX_LAYER.activation = ACTIVATION_softmax;
 
@@ -78,10 +80,10 @@ int main( int argc, char ** argv )
 
 
     /**** Test 2D Convolutional Layer ****/
-    printf( "[" B_GREEN "Test 2D Convolution" RESET "]\n" );
+    /*printf( "[" B_GREEN "Test 2D Convolution" RESET "]\n" );
     if( test2DConvolution() ) return 1;
 
-    printf( LINE_SEPARATOR );
+    printf( LINE_SEPARATOR );*/
     /******************************************/
 
 
@@ -93,11 +95,24 @@ int main( int argc, char ** argv )
     printf( LINE_SEPARATOR );*/
     /******************************************/
 
+
+    /**** Test TinyPSSR ****/
+    uint8_t iterations = 10;
+    uint16_t i = 0;
+    for( i = 0; i < iterations; i++ )
+    {
+        printf( "[" B_GREEN "Test TinyPSSR" RESET "]\n" );
+        if( testTinyPSSR() ) return 1;
+
+        printf( LINE_SEPARATOR );
+    }
+    /******************************************/
+
     return 0;
 }
 
 
-int testDataParsing()
+/*int testDataParsing()
 {
     uint32_t magicNumber = 0, numImages = 0, rows = 0, cols = 0;
 
@@ -183,11 +198,11 @@ int testDataParsing()
 
 int testCrossEntropyLoss( int numClasses, int numPredictions )
 {
-    double ** predictions = (double**) malloc( numPredictions * sizeof( double* ) );
+    DATATYPE ** predictions = (DATATYPE**) malloc( numPredictions * sizeof( DATATYPE* ) );
     uint8_t ** target = (uint8_t**) malloc( numPredictions * sizeof( uint8_t* ) );
     for( int i = 0; i < numPredictions; i++ )
     {
-        predictions[ i ] = (double*) malloc( numClasses * sizeof( double ) );
+        predictions[ i ] = (DATATYPE*) malloc( numClasses * sizeof( DATATYPE ) );
         target[ i ] = (uint8_t*) malloc( numClasses * sizeof( uint8_t ) );
 
 
@@ -218,7 +233,7 @@ int testCrossEntropyLoss( int numClasses, int numPredictions )
 }
 
 
-int testSoftmaxActivation( double * input, int numClasses, double * output )
+int testSoftmaxActivation( DATATYPE * input, int numClasses, DATATYPE * output )
 {
     FC_SOFTMAX_LAYER.activation( input, numClasses, output );
     // ACTIVATION_softmax( input, numClasses, output );
@@ -227,7 +242,7 @@ int testSoftmaxActivation( double * input, int numClasses, double * output )
         printf( "    %lf\n", output[ i ] );
 
     return 0;
-}
+}*/
 
 
 int test2DConvolution()
@@ -236,16 +251,16 @@ int test2DConvolution()
     LAYERS_Conv2D layer;
 
     // Set the input and output filter numbers.
-    layer.inFilters = 2;
-    layer.outFilters = 2;
+    layer.inFilters = 1;
+    layer.outFilters = 16;
 
     // Set the kernel stride.
     layer.strideX = 1;
     layer.strideY = 1;
 
     // Set the kernel size.
-    layer.kernelWidth = 3;
-    layer.kernelHeight = 3;
+    layer.kernelWidth = 5;
+    layer.kernelHeight = 5;
 
     // Set flag to determine if input is padded or not.
     // If zero, no padding. 
@@ -254,33 +269,11 @@ int test2DConvolution()
 
     // Intialize the kernel weights and biases.
     uint16_t i, j, k, 
-             x, y, z;
+             y, z;
     LAYERS_load_weights( &layer.weights, &layer.bias, 
         layer.inFilters, layer.outFilters, 
         layer.kernelHeight, layer.kernelWidth,
-        "test_conv_weights.txt" );
-    /*
-    layer.weights = (double***) malloc( layer.outFilters * sizeof( double** ) );
-    for( i = 0; i < layer.outFilters; i++ )
-    {
-        layer.weights[ i ] = (double**) malloc( layer.kernelHeight * sizeof( double* ) );
-
-        for( j = 0; j < layer.kernelHeight; j++ )
-        {
-            layer.weights[ i ][ j ] = (double*) malloc( layer.kernelWidth * sizeof( double ) );
-
-            layer.weights[ i ][ j ][ 0 ] = 0.0;
-            layer.weights[ i ][ j ][ 1 ] = 1.0;
-            layer.weights[ i ][ j ][ 2 ] = 0.0;
-        }
-    }
-
-    layer.bias = (double*) malloc( layer.outFilters * sizeof( double ) );
-    for( i = 0; i < layer.outFilters; i++ )
-    {
-        layer.bias[ i ] = 0.0;
-    }
-    */
+        "models/1356-rgb/weights/conv2d.txt" );
 
     // Define the forward function.
     layer.forward = (*LAYERS_convolution_2d);
@@ -331,47 +324,34 @@ int test2DConvolution()
         *     0, 0, 0, 0, 0, 0, 0, 0
         *     0, 0, 0, 0, 0, 0, 0, 0
     ****/
-    uint16_t inY = 8, inX = 8;
-    uint16_t outY = 8, outX = 8;
-    double *** input = (double***) malloc( layer.inFilters * sizeof( double** ) );
+    FILE * inF = fopen( TRAIN_DATA_PATH, "rb" );
+    fseek( inF, 16L, SEEK_SET );
+    uint16_t inY = 28, inX = 28;
+    uint16_t outY = 28, outX = 28;
+    DATATYPE *** input = (DATATYPE***) malloc( layer.inFilters * sizeof( DATATYPE** ) );
     for( k = 0; k < layer.inFilters; k++ )
     {
-        input[ k ] = (double**) malloc( inY * sizeof( double* ) );
+        input[ k ] = (DATATYPE**) malloc( inY * sizeof( DATATYPE* ) );
         for( i = 0; i < inY; i++ )
         {
-            input[ k ][ i ] = (double*) malloc( inX * sizeof( double ) );
+            input[ k ][ i ] = (DATATYPE*) malloc( inX * sizeof( DATATYPE ) );
             for( j = 0; j < inX; j++ )
             {
-                if( k == 0 )
-                {
-                    // Input 1
-                    if( j == 3 || j == 4 )
-                        input[ k ][ i ][ j ] = 1;   // Middle columns.
-                    else
-                        input[ k ][ i ][ j ] = 0;
-                }
-                else
-                {
-                    // Input 2
-                    if( i == 3 || i == 4 )
-                        input[ k ][ i ][ j ] = 1;   // Middle rows.
-                    else
-                        input[ k ][ i ][ j ] = 0;
-                }
+                input[ k ][ i ][ j ] = getc( inF ) / 255.0;
             }
         }
     }
 
 
     #if DEBUG
-        for( z = 0; z < layer.inFilters; z++ )
+        for( k = 0; k < layer.inFilters; k++ )
         {
-            printf( DEBUG_PRESTRING "Input Channel %d:\n" DEBUG_PRESTRING, z+1 );
-            for( y = 0; y < inY; y++ )
+            printf( DEBUG_PRESTRING "Input Channel %d:\n" DEBUG_PRESTRING, k+1 );
+            for( i = 0; i < inY; i++ )
             {
-                for( x = 0; x < inX; x++ )
+                for( j = 0; j < inX; j++ )
                 {
-                    printf( "  % 5.2f ", input[ z ][ y ][ x ] );
+                    printf( "  % 5.2f ", input[ k ][ i ][ j ] );
                 }
                 printf( "\n" DEBUG_PRESTRING );
             }
@@ -380,13 +360,13 @@ int test2DConvolution()
     #endif
 
     // Allocate output.
-    double *** output = (double***) malloc( layer.outFilters * sizeof( double** ) );
+    DATATYPE *** output = (DATATYPE***) malloc( layer.outFilters * sizeof( DATATYPE** ) );
     for( k = 0; k < layer.outFilters; k++ )
     {
-        output[ k ] = (double**) malloc( outY * sizeof( double* ) );
+        output[ k ] = (DATATYPE**) malloc( outY * sizeof( DATATYPE* ) );
         for( i = 0; i < outY; i++ )
         {
-            output[ k ][ i ] = (double*) malloc( outX * sizeof( double ) );
+            output[ k ][ i ] = (DATATYPE*) malloc( outX * sizeof( DATATYPE ) );
             for( j = 0; j < outX; j++ )
             {
                 output[ k ][ i ][ j ] = 0;
@@ -454,7 +434,7 @@ int test2DConvolution()
 }
 
 
-int testLoadWeights()
+/*int testLoadWeights()
 {
     char * filename = "test_weights.txt";
 
@@ -468,19 +448,19 @@ int testLoadWeights()
 
     // Parse weights file.
     uint16_t x = 3, y = 3, c = 2;
-    double *** weights; // Hold kernel weights.
-    double * bias;      // Hold filter biases.
+    DATATYPE *** weights; // Hold kernel weights.
+    DATATYPE * bias;      // Hold filter biases.
 
 
-    weights = (double***) malloc( c * sizeof( double** ) );
-    bias = (double*) malloc( c * sizeof( double ) );
+    weights = (DATATYPE***) malloc( c * sizeof( DATATYPE** ) );
+    bias = (DATATYPE*) malloc( c * sizeof( DATATYPE ) );
     for( uint16_t k = 0; k < c; k++ )
     {
-        weights[ k ] = (double**) malloc( y * sizeof( double* ) );
+        weights[ k ] = (DATATYPE**) malloc( y * sizeof( DATATYPE* ) );
         printf( "Filter %d:\n", k+1 );
         for( uint16_t i = 0; i < y; i++ )
         {
-            weights[ k ][ i ] = (double*) malloc( x * sizeof( double ) );
+            weights[ k ][ i ] = (DATATYPE*) malloc( x * sizeof( DATATYPE ) );
             for( uint16_t j = 0; j < x; j++ )
             {
                 fscanf( weightsfp, "%lf", &weights[ k ][ i ][ j ] );
@@ -493,6 +473,356 @@ int testLoadWeights()
     }
 
     fclose( weightsfp );
+
+    return 0;
+}*/
+
+
+int testTinyPSSR()
+{
+    uint16_t i, j, k, 
+             y, z;
+
+    /**** LAYERS ****/
+    /** conv2d **/
+    LAYERS_Conv2D conv2d;
+    if( LAYERS_conv2d_constructor( &conv2d,
+            1, 16,                                  // Input/Output Filters
+            5, 5,                                   // Kernel Size
+            1, 1,                                   // Kernel Stride
+            1,                                      // Padded
+            "models/1356-rgb/weights/conv2d",       // Weights and Biases File
+            (*LAYERS_convolution_2d)                // Forward Function
+        ) 
+    )
+    {
+        return 1;
+    }
+
+    /** p_re_lu **/
+    LAYERS_PreLU prelu;
+    if( LAYERS_prelu_constructor( &prelu,
+            conv2d.outFilters,
+            "models/1356-rgb/weights/p_re_lu",
+            (*LAYERS_prelu_forward)
+        ) 
+    )
+    {
+        return 1;
+    }
+
+    /** conv2d_1 **/
+    LAYERS_Conv2D conv2d_1;
+    if( LAYERS_conv2d_constructor( &conv2d_1,
+            16, 4,                                  // Input/Output Filters
+            1, 1,                                   // Kernel Size
+            1, 1,                                   // Kernel Stride
+            1,                                      // Padded
+            "models/1356-rgb/weights/conv2d_1",     // Weights and Biases File
+            (*LAYERS_convolution_2d)                // Forward Function
+        ) 
+    )
+    {
+        return 1;
+    }
+
+
+    /** p_re_lu_1 **/
+    LAYERS_PreLU prelu_1;
+    if( LAYERS_prelu_constructor( &prelu_1,
+            conv2d_1.outFilters,
+            "models/1356-rgb/weights/p_re_lu_1",
+            (*LAYERS_prelu_forward)
+        ) 
+    )
+    {
+        return 1;
+    }
+
+
+    /** conv2d_2 **/
+    LAYERS_Conv2D conv2d_2;
+    if( LAYERS_conv2d_constructor( &conv2d_2,
+            4, 8,                                   // Input/Output Filters
+            5, 5,                                   // Kernel Size
+            1, 1,                                   // Kernel Stride
+            1,                                      // Padded
+            "models/1356-rgb/weights/conv2d_2",     // Weights and Biases File
+            (*LAYERS_convolution_2d)                // Forward Function
+        ) 
+    )
+    {
+        return 1;
+    }
+
+
+    /** p_re_lu_2 **/
+    LAYERS_PreLU prelu_2;
+    if( LAYERS_prelu_constructor( &prelu_2,
+            conv2d_2.outFilters,
+            "models/1356-rgb/weights/p_re_lu_2",
+            (*LAYERS_prelu_forward)
+        ) 
+    )
+    {
+        return 1;
+    }
+
+
+    /** conv2d_3 **/
+    LAYERS_Conv2D conv2d_3;
+    if( LAYERS_conv2d_constructor( &conv2d_3,
+            8, 4,                                   // Input/Output Filters
+            1, 1,                                   // Kernel Size
+            1, 1,                                   // Kernel Stride
+            1,                                      // Padded
+            "models/1356-rgb/weights/conv2d_3",     // Weights and Biases File
+            (*LAYERS_convolution_2d)                // Forward Function
+        ) 
+    )
+    {
+        return 1;
+    }
+
+
+    /** relu **/
+    LAYERS_ReLU relu;
+    if( LAYERS_relu_constructor( &relu,
+            conv2d_3.outFilters,
+            (*LAYERS_relu_forward)
+        ) 
+    )
+    {
+        return 1;
+    }
+
+
+
+
+    /**** MEMORY ALLOCATION ****/
+    // Read the input image.
+    uint8_t numImages = 14;
+    char* filenames[ 14 ] = {
+        "./data/set14/0_2x_LR",
+        "./data/set14/1_2x_LR",
+        "./data/set14/2_2x_LR",
+        "./data/set14/3_2x_LR",
+        "./data/set14/4_2x_LR",
+        "./data/set14/5_2x_LR",
+        "./data/set14/6_2x_LR",
+        "./data/set14/7_2x_LR",
+        "./data/set14/8_2x_LR",
+        "./data/set14/9_2x_LR",
+        "./data/set14/10_2x_LR",
+        "./data/set14/11_2x_LR",
+        "./data/set14/12_2x_LR",
+        "./data/set14/13_2x_LR"
+    };
+
+
+    float timeSum = 0.0, layerTime = 0.0;
+    uint8_t fileIdx = 0;
+    for( fileIdx = 0; fileIdx < numImages; fileIdx++ )
+    {
+        FILE * inF = fopen( filenames[ fileIdx ], "rb" );
+        if( inF == NULL ){ 
+            // printf( "ERROR: Unable to open file '%s'.", filenames[ fileIdx ] );
+            return 1;
+        }
+
+        // Read in input shape.
+        uint16_t inY = getc( inF ) | getc( inF ) << 8;
+        uint16_t inX = getc( inF ) | getc( inF ) << 8;
+        uint16_t inC = getc( inF ) | getc( inF ) << 8;
+        uint16_t maxC = 16;
+
+        // Allocate space for the input image.
+        DATATYPE *** input_image = (DATATYPE***) malloc( inC * sizeof( DATATYPE** ) );
+        for( k = 0; k < inC; k++ )
+        {
+            input_image[ k ] = (DATATYPE**) malloc( inY * sizeof( DATATYPE* ) );
+            for( i = 0; i < inY; i++ )
+            {
+                input_image[ k ][ i ] = (DATATYPE*) malloc( inX * sizeof( DATATYPE ) );
+                for( j = 0; j < inX; j++ )
+                {
+                    input_image[ k ][ i ][ j ] = getc( inF ) / 255.0;
+                }
+            }
+        }
+
+        fclose( inF );
+
+        // Allocate space for input matrices.
+        DATATYPE *** input = (DATATYPE***) malloc( maxC * sizeof( DATATYPE** ) );
+        for( k = 0; k < maxC; k++ )
+        {
+            input[ k ] = (DATATYPE**) malloc( inY * sizeof( DATATYPE* ) );
+            for( i = 0; i < inY; i++ )
+            {
+                input[ k ][ i ] = (DATATYPE*) malloc( inX * sizeof( DATATYPE ) );
+                memset( input[ k ][ i ], 0, inX );
+            }
+        }
+
+        // Allocate space for output matrices.
+        uint16_t outY = inY, outX = inX;
+        DATATYPE *** output = (DATATYPE***) malloc( maxC * sizeof( DATATYPE** ) );
+        for( z = 0; z < maxC; z++ )
+        {
+            output[ z ] = (DATATYPE**) malloc( outY * sizeof( DATATYPE* ) );
+            for( y = 0; y < outY; y++ )
+            {
+                output[ z ][ y ] = (DATATYPE*) malloc( outX * sizeof( DATATYPE ) );
+                memset( output[ z ][ y ], 0, outX * sizeof( DATATYPE ) );
+            }
+        }
+
+
+        // printf( "[% 2d]:\n", fileIdx + 1 );
+        clock_t start = clock();
+        /**** FORWARD PASS ****/
+            /** Pass first channel through conv2d layer. **/
+            // clock_t tmp = clock();
+            conv2d.forward( &output, input_image, inY, inX, conv2d.inFilters, conv2d );
+            // layerTime = (float)(clock() - tmp) / CLOCKS_PER_SEC;
+            // printf( "  %.4f\n", layerTime );
+
+            /** p_re_lu **/
+            // tmp = clock();
+            prelu.forward( &input, output, inY, inX, prelu );
+            // layerTime = (float)(clock() - tmp) / CLOCKS_PER_SEC;
+            // printf( "  %.4f\n", layerTime );
+
+            /** conv2d_1 **/
+            // tmp = clock();
+            conv2d_1.forward( &output, input, inY, inX, conv2d_1.inFilters, conv2d_1 );
+            // layerTime = (float)(clock() - tmp) / CLOCKS_PER_SEC;
+            // printf( "  %.4f\n", layerTime );
+
+            /** p_re_lu_1 **/
+            // tmp = clock();
+            prelu_1.forward( &input, output, inY, inX, prelu_1 );
+            // layerTime = (float)(clock() - tmp) / CLOCKS_PER_SEC;
+            // printf( "  %.4f\n", layerTime );
+
+            /** conv2d_2 **/
+            // tmp = clock();
+            conv2d_2.forward( &output, input, inY, inX, conv2d_2.inFilters, conv2d_2 );
+            // layerTime = (float)(clock() - tmp) / CLOCKS_PER_SEC;
+            // printf( "  %.4f\n", layerTime );
+
+            /** p_re_lu_2 **/
+            // tmp = clock();
+            prelu_2.forward( &input, output, inY, inX, prelu_2 );
+            // layerTime = (float)(clock() - tmp) / CLOCKS_PER_SEC;
+            // printf( "  %.4f\n", layerTime );
+
+            /** conv2d_3 **/
+            // tmp = clock();
+            conv2d_3.forward( &output, input, inY, inX, conv2d_3.inFilters, conv2d_3 );
+            // layerTime = (float)(clock() - tmp) / CLOCKS_PER_SEC;
+            // printf( "  %.4f\n", layerTime );
+
+            /** relu **/
+            // tmp = clock();
+            relu.forward( &input, output, inY, inX, relu );
+            // layerTime = (float)(clock() - tmp) / CLOCKS_PER_SEC;
+            // printf( "  %.4f\n", layerTime );
+        /**** /FORWARD PASS ****/
+        clock_t end = clock();
+        timeSum += (float)(end - start) / CLOCKS_PER_SEC;
+        // Must Beat: 0.0419s
+        // (for layers conv2d through conv2d_3 on one channel)
+        // printf( "%.4f  ", (float)(end - start) / CLOCKS_PER_SEC );
+
+
+        // Free input image.
+        for( k = 0; k < inC; k++ )
+        {
+            for( i = 0; i < inY; i++ )
+            {
+                free( input_image[ k ][ i ] );
+            }
+            free( input_image[ k ] );
+        }
+        free( input_image );
+
+
+        // Free input.
+        for( k = 0; k < maxC; k++ )
+        {
+            for( i = 0; i < inY; i++ )
+            {
+                free( input[ k ][ i ] );
+            }
+            free( input[ k ] );
+        }
+        free( input );
+
+
+        // Free output.
+        for( z = 0; z < maxC; z++ )
+        {
+            for( y = 0; y < outY; y++ )
+            {
+                free( output[ z ][ y ] );
+            }
+            free( output[ z ] );
+        }
+        free( output );
+    }
+
+
+    printf( "\nTotal:   %.4f\n"
+            "Average: %.4f\n", timeSum, timeSum / numImages );
+
+    /**** FREE MEMORY ****/
+    // Free weights and biases.
+    LAYERS_conv2d_free_weights( &conv2d );
+    LAYERS_prelu_free_weights( &prelu );
+    LAYERS_conv2d_free_weights( &conv2d_1 );
+    LAYERS_prelu_free_weights( &prelu_1 );
+    LAYERS_conv2d_free_weights( &conv2d_2 );
+    LAYERS_prelu_free_weights( &prelu_2 );
+    LAYERS_conv2d_free_weights( &conv2d_3 );
+
+    /*
+    // Free input image.
+    for( k = 0; k < inC; k++ )
+    {
+        for( i = 0; i < inY; i++ )
+        {
+            free( input_image[ k ][ i ] );
+        }
+        free( input_image[ k ] );
+    }
+    free( input_image );
+
+
+    // Free input.
+    for( k = 0; k < maxC; k++ )
+    {
+        for( i = 0; i < inY; i++ )
+        {
+            free( input[ k ][ i ] );
+        }
+        free( input[ k ] );
+    }
+    free( input );
+
+
+    // Free output.
+    for( z = 0; z < maxC; z++ )
+    {
+        for( y = 0; y < outY; y++ )
+        {
+            free( output[ z ][ y ] );
+        }
+        free( output[ z ] );
+    }
+    free( output );
+    */
 
     return 0;
 }
