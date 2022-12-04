@@ -223,6 +223,9 @@ int LAYERS_prelu_free_weights( LAYERS_PreLU * layer )
 int LAYERS_convolution_2d( DATATYPE **** output, DATATYPE *** input, uint16_t inY,
                            uint16_t inX, uint16_t inC, LAYERS_Conv2D layer )
 {
+    // TODO: Convert data to flattened array. Check if time saved due to
+    // reducing address calculation.
+
     // Calculate the output size.
     // Fast ceiling division: https://stackoverflow.com/a/14878734/2898057
     uint16_t outY, outX;
@@ -248,10 +251,10 @@ int LAYERS_convolution_2d( DATATYPE **** output, DATATYPE *** input, uint16_t in
     #endif
 
     // Calculate the output
-    int16_t i, j, k,   // Iterate over kernel.
-            y, x, z,   // Iterate over output.
-            yy, xx;    // Index input.
-    DATATYPE sum;         // Calculate convolution.
+    int16_t i, j, k, a, b, // Iterate over kernel.
+            y, x, z,       // Iterate over output.
+            yy, xx;        // Index input.
+    DATATYPE sum;          // Calculate convolution.
 
 
     // Calculate necessary padding (if needed).
@@ -275,34 +278,53 @@ int LAYERS_convolution_2d( DATATYPE **** output, DATATYPE *** input, uint16_t in
             for( x = 0; x < outX; x++ )
                 (*output)[ z ][ y ][ x ] = layer.bias[ z ];
 
+    // TODO: Separate convolution from completely inside image and convolution
+    // that requires padding.
+
     for( z = 0; z < layer.outFilters; z++ ) // Output channels.
     {
         #if DEBUG
             printf( "Output Channel %i:\n", z+1 );
         #endif
 
+        float *** weightOutputFilter = layer.weights[ z ];
+        float ** outputFilter = (*output)[ z ];
         for( k = 0; k < inC; k++ )  // Input channels.
         {
             #if DEBUG
                 printf( "  Input Channel %i:\n", k+1 );
             #endif
 
-            for( i = 0; i < outY; i += layer.strideY )  // Output rows.
+            float ** inputFilter = input[ k ];
+            float ** weightInputFilter = weightOutputFilter[ k ];
+            for( i = 0, a = 0; i < outY; i += layer.strideY, a++ )  // Output rows.
             {
+                float * outputRow = outputFilter[ a ];
+
                 #if DEBUG
                     printf( "  " );
                 #endif
-                for( j = 0; j < outX; j += layer.strideX )  // Output columns.
+                for( j = 0, b = 0; j < outX; j += layer.strideX, b++ )  // Output columns.
                 {
                     sum = 0.0;
 
                     for( y = 0; y < layer.kernelHeight; y++ )   // Kernel rows.
                     {
-                        
+                        // Reduce calculations for each pixel.
+                        yy = i + y - topPadding;
+
+                        // If zero padding is used, we don't need to check any
+                        // values in this row.
+                        if( yy < 0 || yy >= inY )
+                            continue;
+
+                        float * weightRow = weightInputFilter[ y ];
+                        float * inputRow = inputFilter[ yy ];
+
                         for( x = 0; x < layer.kernelWidth; x++ )    // Kernel columns.
                         {
                             // Calculate row/column position in input.
-                            yy = i + y - topPadding;
+                            // yy = in_y_center;
                             xx = j + x - leftPadding;
                             
                             /**** The following is only valid if padding
@@ -329,16 +351,16 @@ int LAYERS_convolution_2d( DATATYPE **** output, DATATYPE *** input, uint16_t in
                             /**** Otherwise, zero padding is used
                             ****/ 
                             // Check if padding is needed.
-                            if( yy < 0 || yy >= inY ||
-                                xx < 0 || xx >= inX )
+                            if( xx < 0 || xx >= inX )
                             {
                                 // sum += 0
+                                continue;
                             }
                             else
                             {
                                 // Calculate value.
-                                sum += input[ k ][ yy ][ xx ] *
-                                       layer.weights[ z ][ k ][ y ][ x ];
+                                sum += inputRow[ xx ] *
+                                       weightRow[ x ];
                             }
                         }
                     }
@@ -346,7 +368,9 @@ int LAYERS_convolution_2d( DATATYPE **** output, DATATYPE *** input, uint16_t in
                     #if DEBUG
                         printf( "  % 5.2f", sum );
                     #endif
-                    (*output)[ z ][ i ][ j ] += sum;
+                    // a = i / layer.strideY
+                    // b = j / layer.strideX
+                    outputRow[ b ] += sum;
                 }
 
                 #if DEBUG
